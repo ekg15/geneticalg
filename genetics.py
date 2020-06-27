@@ -15,16 +15,17 @@ def main():
     c2 = np.array([1, -1])
     c3 = np.array([-1, 1])
     c4 = np.array([-1, -1])
-    print(withinConstraintsOrigin([c1, c2, c3, c4], np.array([0, 0])))
+    # print(withinConstraintsOrigin([c1, c2, c3, c4], np.array([0, 0])))
     c1 = np.array([2, 1])
     c2 = np.array([1, 1])
     c3 = np.array([1, 2])
     c4 = np.array([2, 2])
-    print(withinConstraints([c1, c2, c3, c4], np.array([0, 0])))
-    initpopulation([c1, c2, c3, c4], 10)
-    print(evalpopulation(lambda x: np.sum(x), initpopulation([c1, c2, c3, c4], 10)))
-    selection(evalpopulation(lambda x: np.sum(x), initpopulation([c1, c2, c3, c4], 10)), 10)
-    evolution(selection(evalpopulation(lambda x: np.sum(x), initpopulation([c1, c2, c3, c4], 10)), 10), [c1, c2, c3, c4], .75, .075, 10)
+    # print(withinConstraints([c1, c2, c3, c4], np.array([0, 0])))
+    # print(initpopulation([c1, c2, c3, c4], 10))
+    # print(evalpopulation(lambda x: np.sum(x), initpopulation([c1, c2, c3, c4], 10)))
+    # selection(evalpopulation(lambda x: np.sum(x), initpopulation([c1, c2, c3, c4], 10)), 10)
+    # print(evolution(selection(evalpopulation(lambda x: np.sum(x), initpopulation([c1, c2, c3, c4], 10)), 10), [c1, c2, c3, c4], .75, .075, 10))
+    geneticAlgorithm(lambda x: np.sum(x), [c1, c2, c3, c4], 10, .75, .075, 10**-2)
 
 
 # Needs: Function, constraints: array of points, population size, pc, pm, tol
@@ -34,7 +35,13 @@ def main():
 # For now, constraints are purely convex and squares
 # Later, function defining validity
 def geneticAlgorithm(f, constraints, pop, pc, pm, tol):
-    pass
+    pk1 = evolution(selection(evalpopulation(lambda x: np.sum(x), initpopulation(constraints, pop)), pop), constraints, pc, pm, pop)
+    i = 0
+    while i < 100:
+        pk1 = evolution(selection(evalpopulation(lambda x: np.sum(x), pk1), pop), constraints, pc, pm, pop)
+        i += 1
+    print(pk1)
+    return pk1
 
 
 """perturb the two points above by some random amount: 
@@ -48,10 +55,30 @@ def evolution(matingPool, constraints, pc, pm, pop):
     w1 = np.random.rand(constraints[0].size)/4
     w2 = -1 * w1
     print(w1, w2)
+    pk1 = []
+    # crossover
     for p in matingPool:
         if np.random.random() < pc:
-            pass
-    pass
+            # it mates with random selected member (mating pool has already passed 'selection')
+            print(np.shape(matingPool))
+            print(matingPool)
+            x = np.random.randint(0, np.shape(matingPool)[0] - 1)
+            print(x)
+            mate = matingPool[x][1]
+            alpha = np.random.random()
+            z1 = alpha * p[1] + (1 - alpha) * mate
+            z2 = (1 - alpha) * p[1] + alpha * mate
+            pk1.append(z1)
+            pk1.append(z2)
+    for p in pk1:
+        if np.random.random() < pm:
+            w = np.random.random(np.size(p))
+            p = p + w
+    # mutation on new pool P(k+1)
+    print(pk1)
+    # needs to return a numpy matrix
+    print(np.stack(pk1))
+    return np.stack(pk1)
 
 
 # tournament scheme
