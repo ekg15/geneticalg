@@ -25,7 +25,7 @@ def main():
     # print(evalpopulation(lambda x: np.sum(x), initpopulation([c1, c2, c3, c4], 10)))
     # selection(evalpopulation(lambda x: np.sum(x), initpopulation([c1, c2, c3, c4], 10)), 10)
     # print(evolution(selection(evalpopulation(lambda x: np.sum(x), initpopulation([c1, c2, c3, c4], 10)), 10), [c1, c2, c3, c4], .75, .075, 10))
-    geneticAlgorithm(lambda x: np.sum(x), [c1, c2, c3, c4], 10, .75, .075, 10**-2)
+    geneticAlgorithm(lambda x: np.sum(x), [c1, c2, c3, c4], 10, .75, .175, 10**-2)
 
 
 # Needs: Function, constraints: array of points, population size, pc, pm, tol
@@ -37,7 +37,7 @@ def main():
 def geneticAlgorithm(f, constraints, pop, pc, pm, tol):
     pk1 = evolution(selection(evalpopulation(lambda x: np.sum(x), initpopulation(constraints, pop)), pop), constraints, pc, pm, pop)
     i = 0
-    while i < 100:
+    while i < 20:
         pk1 = evolution(selection(evalpopulation(lambda x: np.sum(x), pk1), pop), constraints, pc, pm, pop)
         i += 1
     print(pk1)
@@ -51,33 +51,34 @@ where W1 and W2 are two randomly generated vectors (with zero mean)"""
 
 def evolution(matingPool, constraints, pc, pm, pop):
     alpha = np.random.random()
-    print(alpha)
+    # print(alpha)
     w1 = np.random.rand(constraints[0].size)/4
     w2 = -1 * w1
-    print(w1, w2)
+    # print(w1, w2)
     pk1 = []
     # crossover
-    for p in matingPool:
-        if np.random.random() < pc:
-            # it mates with random selected member (mating pool has already passed 'selection')
-            print(np.shape(matingPool))
-            print(matingPool)
-            x = np.random.randint(0, np.shape(matingPool)[0] - 1)
-            print(x)
-            mate = matingPool[x][1]
-            alpha = np.random.random()
-            z1 = alpha * p[1] + (1 - alpha) * mate
-            z2 = (1 - alpha) * p[1] + alpha * mate
-            pk1.append(z1)
-            pk1.append(z2)
+    while len(pk1) < len(matingPool):
+        for p in matingPool:
+            if np.random.random() < pc and len(pk1) < len(matingPool):
+                # it mates with random selected member (mating pool has already passed 'selection')
+                # print(np.shape(matingPool))
+                # print(matingPool)
+                x = np.random.randint(0, np.shape(matingPool)[0] - 1)
+                # print(x)
+                mate = matingPool[x][1]
+                alpha = np.random.random()
+                z1 = inConstraintCheck(constraints, alpha * p[1] + (1 - alpha) * mate + w1)
+                z2 = inConstraintCheck(constraints, (1 - alpha) * p[1] + alpha * mate + w2)
+                pk1.append(z1)
+                pk1.append(z2)
     for p in pk1:
         if np.random.random() < pm:
             w = np.random.random(np.size(p))
             p = p + w
     # mutation on new pool P(k+1)
-    print(pk1)
+    # print(pk1)
     # needs to return a numpy matrix
-    print(np.stack(pk1))
+    # print(np.stack(pk1))
     return np.stack(pk1)
 
 
@@ -88,9 +89,11 @@ def selection(populationScores, pop):
     matingPool = []
     for i in range(pop):
         first = populationScores[np.random.randint(0, pop-1)]
+        print(len(populationScores))
+        print(pop)
         second = populationScores[np.random.randint(0, pop-1)]
         matingPool.append(first if first[0] > second[0] else second)
-    print(matingPool)
+    # print(matingPool)
     return matingPool
 
 
@@ -117,6 +120,19 @@ def initpopulation(constraints, pop):
         population[j] = np.random.uniform(minboundvector[j], maxboundvector[j], pop)
     print(population.T)
     return population.T
+
+
+def inConstraintCheck(constraints, p):
+    constraintmatrix = np.stack(constraints)
+    minboundvector = np.zeros(np.size(constraints[0]))
+    maxboundvector = np.zeros(np.size(constraints[0]))
+    for i in range(np.shape(constraintmatrix.T)[0]):
+        minboundvector[i] = min(constraintmatrix.T[i])
+        maxboundvector[i] = max(constraintmatrix.T[i])
+    for j in range(np.size(p)):
+        p[j] = max(p[j], minboundvector[j])
+        p[j] = min(p[j], maxboundvector[j])
+    return p
 
 
 # False: Not in constraint. True: In.
