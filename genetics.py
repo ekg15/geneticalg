@@ -1,5 +1,7 @@
-import numpy as np
+from copy import deepcopy
 from functools import *
+import numpy as np
+
 """
 1. Set k := 0. Generate an initial population P(0).
 2. Evaluate P(k).
@@ -12,20 +14,31 @@ from functools import *
 
 def main():
     c1 = np.array([1, 1])
-    c2 = np.array([1, -1])
-    c3 = np.array([-1, 1])
-    c4 = np.array([-1, -1])
+    c2 = np.array([1, -5])
+    c3 = np.array([-5, 1])
+    c4 = np.array([-5, -5])
     # print(withinConstraintsOrigin([c1, c2, c3, c4], np.array([0, 0])))
-    c1 = np.array([2, 1])
-    c2 = np.array([1, 1])
-    c3 = np.array([1, 2])
-    c4 = np.array([2, 2])
+    # c1 = np.array([2, 1])
+    # c2 = np.array([1, 1])
+    # c3 = np.array([1, 2])
+    # c4 = np.array([2, 2])
     # print(withinConstraints([c1, c2, c3, c4], np.array([0, 0])))
     # print(initpopulation([c1, c2, c3, c4], 10))
     # print(evalpopulation(lambda x: np.sum(x), initpopulation([c1, c2, c3, c4], 10)))
     # selection(evalpopulation(lambda x: np.sum(x), initpopulation([c1, c2, c3, c4], 10)), 10)
     # print(evolution(selection(evalpopulation(lambda x: np.sum(x), initpopulation([c1, c2, c3, c4], 10)), 10), [c1, c2, c3, c4], .75, .075, 10))
-    geneticAlgorithm(lambda x: np.sum(x), [c1, c2, c3, c4], 10, .75, .175, 10**-2)
+
+    def GoldsteinPrice(inputarr):  # the Goldstein-Price Function
+        x1, x2 = inputarr[0], inputarr[1]
+        return ((x1 + x2 + 1) ** 2 * (3 * x1 ** 2 + 6 * x1 * x2 - 14 * x1 + 3 * x2 ** 2 - 14 * x2 + 19) + 1) * (
+                (2 * x1 - 3 * x2) ** 2 * (12 * x1 ** 2 - 36 * x1 * x2 - 32 * x1 + 27 * x2 ** 2 + 48 * x2 + 18) + 30)
+
+    def negativeGoldsteinPrice(inputarr):  # the Goldstein-Price Function
+        x1, x2 = inputarr[0], inputarr[1]
+        return -1 * ((x1 + x2 + 1) ** 2 * (3 * x1 ** 2 + 6 * x1 * x2 - 14 * x1 + 3 * x2 ** 2 - 14 * x2 + 19) + 1) * (
+                    (2 * x1 - 3 * x2) ** 2 * (12 * x1 ** 2 - 36 * x1 * x2 - 32 * x1 + 27 * x2 ** 2 + 48 * x2 + 18) + 30)
+
+    geneticAlgorithm(negativeGoldsteinPrice, [c1, c2, c3, c4], 10, .75, .175, 10**-2)
 
 
 # Needs: Function, constraints: array of points, population size, pc, pm, tol
@@ -35,12 +48,14 @@ def main():
 # For now, constraints are purely convex and squares
 # Later, function defining validity
 def geneticAlgorithm(f, constraints, pop, pc, pm, tol):
-    pk1 = evolution(selection(evalpopulation(lambda x: np.sum(x), initpopulation(constraints, pop)), pop), constraints, pc, pm, pop)
+    pk1 = evolution(selection(evalpopulation(f, initpopulation(constraints, pop)), pop), constraints, pc, pm, pop)
+    pk0 = deepcopy(pk1)
     i = 0
-    while i < 20:
-        pk1 = evolution(selection(evalpopulation(lambda x: np.sum(x), pk1), pop), constraints, pc, pm, pop)
+    while i < 50:
+        pk1 = evolution(selection(evalpopulation(f, pk1), pop), constraints, pc, pm, pop)
         i += 1
-    print(pk1)
+    print("Initial population:\n", pk0)
+    print("Evolved population:\n", pk1)
     return pk1
 
 
